@@ -1,0 +1,95 @@
+Instructions for transforming a query into the required JSON answer
+
+1) Understand the input
+- The query contains:
+  - date: the time context for evaluating the statement
+  - statement: the claim to be assessed
+  - evidences: one or more evidence snippets, each with a unique id (e.g., 1, 2, …) and content (articles, press releases, transcripts, videos, webpages, emails/quotes, etc.)
+- Your output must be a JSON object with exactly two fields:
+  - assessment: string with your reasoning and supporting references
+  - veracity: one of "true", "untrue", or "unverifiable"
+
+2) Extract and interpret the claim
+- Read the statement carefully and identify the core factual claim(s). Break multi-part statements into sub-claims.
+- Use any clarifications in parentheses from the source to understand the context, but assess the original claim.
+- If wording is imprecise or ambiguous, infer the intended meaning from context and explicitly state your interpretation in the assessment. Typical ambiguities to resolve or note:
+  - Counts: unique locations vs. number of events/visits
+  - Status terms: “plánováno” vs. “požadavek” vs. “schváleno”
+  - Approximation phrases: “kolem”, “asi”, “přibližně”
+
+3) Collect and map evidence
+- Read all evidence entries and note their id numbers. You will cite them strictly as [id] where used.
+- Discard clearly unrelated evidence.
+- If an evidence references a video, document, or section, you may add a brief pointer in parentheses after the citation, e.g., [1] (video, čas 1:27:58), [3] (.pdf, str. 90), or mention a named section of a site.
+- If an evidence contains an official quote (e.g., spokesperson’s reply included in the provided materials), you may rely on it; attribute it in the assessment and cite its evidence id.
+
+4) Temporal consistency check
+- Always evaluate the claim as of the provided date. Pay special attention to time-sensitive wording such as “už”, “už skončilo”, “k dnešku”, “as of now”, deadlines, and scheduled events.
+- Verify deadlines and any extensions announced in the evidences. If a claim asserts a status that contradicts the timeline as of the date, treat it accordingly.
+- Do not assume outcomes after the given date.
+
+5) Verify the claim
+- Multi-part claims: Identify the material core (the part that determines the substance of the claim). Assess each sub-claim and base the overall verdict on the decisive component. For example, a clear timing/status error can determine the verdict even if a separate number is not precisely verifiable.
+- Status semantics: Distinguish between proposal/request vs. planned vs. approved/implemented. Misstating the status (e.g., calling a “požadavek” a “plán”) is a substantive inaccuracy.
+- Quantitative claims:
+  - When lists are provided, perform simple counts, de-duplicate obvious repeats, and present the resulting totals with citations.
+  - If only partial lists exist, you may present defensible lower/upper bounds and explain the limitation.
+  - Show short calculations plainly (inputs with citations, operation, result).
+  - Approximation tolerance: interpret “kolem/asi/přibližně” with a default ±10% band. Differences beyond ~15% generally indicate the claim is untrue unless context justifies otherwise; explain any judgment calls.
+- Quotations: Confirm that the person said what is asserted, with a specific reference (e.g., video timestamp) where available.
+- If crucial information is missing from the provided evidences and cannot be reliably established, be ready to conclude “unverifiable.”
+
+6) Decide the veracity label
+- true:
+  - The core of the statement is supported by the evidence, allowing for minor rounding or phrasing differences within the stated tolerance or reasonable interpretation.
+- untrue:
+  - The evidence contradicts the material core in a substantial way (e.g., timelines/deadlines wrong as of the date; numbers off beyond tolerance; status misrepresented).
+  - The claim asserts a status/outcome that, by the date given, had not occurred (and evidence shows so).
+- unverifiable:
+  - The necessary information cannot be confirmed or refuted from the provided evidences (e.g., exact counts not published, private events without records).
+  - Use this only if no decisive sub-claim can be verified or falsified; do not default to “unverifiable” when a clear contradiction/support exists on a decisive component.
+- Admissions of ignorance (e.g., “nevím…”) are not factual claims and should not drive the veracity; focus on the factual parts.
+
+7) Write the assessment
+- Use the same language as the statement. Keep a neutral, non-judgmental tone.
+- Briefly restate the context and the specific point(s) evaluated, including any interpretation you adopted for clarity.
+- Present the key facts from the evidence that support your evaluation, with inline citations using the evidence ids (e.g., [1], [2]). When helpful, include short direct quotes in quotation marks (italics optional).
+- For time-based claims, cite the specific evidence showing deadlines or extensions and contrast it with the claim’s timing.
+- For numbers, show inputs and simple calculations succinctly. If using bounds (e.g., count from a partial list), state that clearly.
+- If the claim cannot be verified, explain precisely what is missing (e.g., “souhrnné číslo není uvedeno”, “materiály nejsou zveřejněny”), and, if relevant, note the existence of partial lists or prior sections without inventing details.
+
+8) Referencing style
+- Cite evidence ids exactly as [id] at the points where each fact is used. Examples:
+  - “… uvedl[1] (video, čas 1:27:58) …”
+  - “… podle zveřejněné výzvy[3] (.pdf, str. 90) …”
+  - “… v sekci ‘navštívená místa’ je uvedeno …[5]”
+- If several evidences support the same fact, cite multiple ids: [1], [3].
+- Do not invent references not present among the provided evidences. If you must refer to general knowledge, do so cautiously and prefer marking the claim “unverifiable.”
+
+9) Calculations and hypotheticals
+- When the claim involves a derived result (sums, differences, deduplicated counts), present the math plainly:
+  - State the original figures with citations.
+  - Show the operation and the result.
+  - Clarify if a scenario is hypothetical or if a list provides only a lower bound.
+- For approximate claims, compare the claimed value to the evidenced value and note whether it falls within the tolerance band.
+
+10) Edge cases and interpretation
+- Statements about intentions or general stances must be backed by quotes or official records in the evidences; otherwise “unverifiable.”
+- Distinguish “otevřen vyjednávat” vs. “připraven souhlasit” if relevant; judge by the main idea without flipping the meaning.
+- If a number is asserted without a breakdown and no trace is possible from the provided evidences, and you cannot derive it reliably, mark “unverifiable.”
+- If part of the claim is true and part is not, explain both and decide veracity by the overall material accuracy.
+- Websites evolve; assess the “as of” status reflected in the evidences provided.
+
+11) Produce the JSON
+- Output exactly and only the JSON object with:
+  - "assessment": your written assessment string
+  - "veracity": one of "true", "untrue", "unverifiable"
+- Do not include any extra fields, comments, or text outside the JSON.
+
+Quality checklist before finalizing
+- Language matches the statement’s language.
+- Evidence ids are correctly cited where facts are asserted, with useful pointers where applicable.
+- Temporal context is respected (as-of date) and timing/status claims are checked against deadlines/updates.
+- Calculations (if any) are shown and consistent with the cited data; list counts are deduplicated when obvious.
+- You identified the material core of the claim and based the verdict on decisive components; you did not default to “unverifiable” when a clear contradiction/support exists.
+- The JSON is valid and contains only the two required keys.

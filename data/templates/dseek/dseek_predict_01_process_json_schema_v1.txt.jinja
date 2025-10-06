@@ -1,0 +1,11 @@
+{{prompt}}
+
+The query enclosed between <query> and </query> tags follows:
+
+<query>{{query}}</query>
+
+The answer will be JSON with exactly the following schema:
+
+{{schema}}
+
+Start with the <think> tag. The text after closing </think> will contain only the JSON matching the schema and nothing else (it will be later parsed). Do not use "\u" escape sequences in JSON strings. You are not limited to ASCII!

@@ -1,0 +1,97 @@
+Instructions for transforming a query into the required JSON answer
+
+1) Output format
+- Produce a single JSON object with exactly two keys:
+  - assessment: a string containing your reasoning and conclusion narrative.
+  - veracity: one of exactly "true", "untrue", or "unverifiable".
+- Do not add any other fields. Ensure valid JSON and proper escaping of quotes.
+
+2) Language and tone
+- Write the assessment in the same primary language as the statement in the query.
+- If the language cannot be infered from the query use English.
+- Use a neutral, factual tone. Avoid normative judgments and rhetorical flourishes.
+- Keep it concise. Short paragraphs and, if helpful, brief bullet points are acceptable. Avoid heavy formatting.
+
+3) Read and parse the query
+- Identify and note:
+  - date: the temporal context for evaluating time-bound phrases (“nyní,” “tenhle rok,” “v současné době”).
+  - source: who made the statement (may help infer ambiguous references like “úřad”).
+  - statement: the exact claim to evaluate.
+  - evidences: numbered items with content. Each evidence id is a potential citation anchor.
+
+4) Decompose the claim
+- Break the statement into essential factual elements. Typical types:
+  - Quantitative facts (numbers, lengths, percentages).
+  - Temporal claims (by a certain time, this year, now).
+  - Comparative/superlative claims (most, majority, x-times more).
+  - Locational/organizational facts (counts of sites, addresses, branches).
+  - Quotations (who said what).
+- For composite statements, list the key subclaims. The overall rating depends on the essential parts.
+
+5) Select and use evidence
+- Read each evidence item and map which parts support, contradict, or contextualize each subclaim. Ignore irrelevant items.
+- Treat evidence items that clearly point to an authoritative source (e.g., an official organizational page, a state agency’s plan or dataset) as citations of record, even if the pasted excerpt is truncated. You may summarize the pertinent facts from that source and cite the evidence id, provided there is no conflict with the snippet.
+- If the provided evidence is clearly insufficient or a placeholder (e.g., only a metric label), you may use widely recognized, authoritative statistical sources consistent with the claim’s domain (e.g., World Bank for GDP per capita; official road authority plans for infrastructure lengths). Prefer data contemporaneous with the query date.
+
+6) Citations
+- When referencing a provided evidence item, cite it inline with square brackets containing the evidence id, e.g., [3].
+- If quoting text from an evidence item, place it in quotes and add the citation [id].
+- When you use widely accepted external statistics because the provided evidence is insufficient, attribute them in text (e.g., “podle dat Světové banky”), and ensure they do not conflict with any provided evidence. Continue to cite relevant provided evidence [id] for context where applicable.
+
+7) Reasoning and calculations
+- For numbers, show minimal but clear logic:
+  - State the relevant figures and perform simple sums/ratios as needed.
+  - Specify assumptions (e.g., which categories are included in totals).
+  - Rounding tolerance: allow small differences due to rounding or aggregation. As a rule of thumb, deviations up to about 5–10% can be considered consistent if the structure matches and the claim uses approximate wording (“zhruba,” “cca,” whole-number totals).
+- For temporal claims:
+  - Anchor “nyní,” “tenhle rok,” etc., to the query date. Use data closest to that time.
+  - Forward-looking/planned claims (“bude,” “mělo by”) should be checked against official plans valid at the query date; they can be rated as true if they reflect those plans, noting that realization may differ later.
+- For comparative claims:
+  - Define your comparison basis. For “x-krát,” compute the ratio and consider values within a reasonable band (e.g., 8× ≈ 7–9×).
+  - For vague “zhruba stejný,” treat values within roughly 10–20% as “zhruba” comparable unless the evidence provides a specific benchmark.
+- For locational/organizational counts:
+  - If relevant, justify grouping logic (e.g., adjacent buildings/addresses forming one “místo”). Briefly explain how addresses map to site counts.
+
+8) Determining veracity
+- true:
+  - All essential parts are supported by evidence or authoritative sources without material caveats; or
+  - Minor discrepancies fall within reasonable rounding/approximation and do not alter the core truth.
+- untrue:
+  - An essential part is contradicted by the best available evidence (wrong numbers, wrong time, misquote, materially misleading context); or
+  - Quantitative claims are demonstrably off given the evidence and tolerances.
+- unverifiable:
+  - Crucial data are missing or conflicting and cannot be reasonably resolved with provided or standard authoritative sources; or
+  - The claim hinges on undefined subjective terms without an accepted benchmark in the evidence; or
+  - The time reference cannot be aligned to available data.
+
+9) Handling conflicting or partial evidence
+- If figures conflict across evidence items, present the conflicting numbers with citations and explain why the conflict cannot be resolved. Prefer the more authoritative source within the provided set. If unresolved, lean toward “unverifiable.”
+- For composite claims:
+  - If an essential subclaim is false, the overall verdict is “untrue,” even if other subclaims are correct.
+  - If essential components are supported and only nonessential parts are unknown, you may still conclude “true,” noting any unknowns.
+
+10) Structure of the assessment
+- Start by restating the key elements of the claim in your own words so the reader knows what is being tested.
+- List the essential subclaims if the statement is composite.
+- Present the most relevant evidence concisely:
+  - Quote or summarize, with citations [id].
+  - Include brief computations (sums/ratios) as needed.
+  - For time-bound claims, state how you align “now/this year” to the query date.
+  - For grouping/aggregation (e.g., locations), briefly explain the grouping logic used.
+- Close with a short, explicit justification of the chosen veracity rating.
+
+11) Typical judgment patterns and thresholds
+- Quantitative mismatch: show the correct numbers from evidence/authoritative sources and conclude “untrue” if outside tolerance.
+- Misquotes/miscontextualization: present the original wording/context and explain the discrepancy; usually “untrue.”
+- Majority/most claims: require >50% supported by evidence; otherwise “unverifiable.”
+- Vague qualifiers:
+  - “zhruba stejný” ≈ within 10–20%.
+  - “x-krát” ≈ ratio within ±12.5% of x (e.g., 8× ≈ 7–9×).
+  - If no clear benchmark and evidence cannot operationalize the term, “unverifiable.”
+- Forward-looking plans: match to official plans as of the query date; if aligned, “true,” with a note that realization is pending.
+
+12) Final checks before output
+- Assessment references the key facts and includes appropriate citations [id] where applicable.
+- Veracity label matches your reasoning.
+- JSON is syntactically valid, with only the required keys and proper escaping.
+- Keep the assessment succinct and in the statement’s language.
