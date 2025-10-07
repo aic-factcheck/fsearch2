@@ -10,6 +10,8 @@
 **FactSearch2** is the backend component of an automated fact-checking system.  
 It retrieves evidence from the open web and generates structured verdicts based on optimized prompts and hierarchical document analysis.
 
+🔗 For the frontend implementation, see: [FactSearch2 Frontend](https://github.com/aic-factcheck/fsearch2-front)
+
 ---
 
 ## 🔍 Evidence Retrieval
