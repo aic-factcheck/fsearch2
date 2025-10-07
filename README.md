@@ -61,6 +61,45 @@ SERPER_API_KEY=your_serper_key_here
 
 ---
 
+## 💾 FastText Vectors
+
+Semantical Markdown chunking requires **FastText word embeddings**.
+You need to place the model files in:
+
+```
+data/fasttext/vectors
+```
+
+### For English vectors:
+
+```bash
+wget https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.en.300.bin.gz
+gunzip -d cc.en.300.bin.gz
+```
+
+After extraction, you should have:
+
+```
+data/fasttext/vectors/cc.en.300.bin
+```
+
+> 📘 You can use other FastText languages by placing their corresponding `.bin` files in the same directory and fix configuration [here](./fsearch2/fact_search/config/nodes.py) and [here](./fsearch2/claim_verifier/config/nodes.py).
+
+---
+
+## 👥 User Management
+
+To add new users:
+
+```bash
+python fsearch2/create_user.py <user_name>
+```
+
+* New users are stored in `users.json`
+* Ensure `users.json` is writable by the backend service
+
+---
+
 ## 🧩 Project Structure
 
 ```
@@ -70,7 +109,9 @@ fsearch2/
 ├── fact_search/
 │   ├── agent.py              # LangGraph pipeline definition
 │   └── config/               # Verdict generation node configuration files
-└── ws_server.py              # WebSocket server entry point
+├── ws_server.py              # WebSocket server entry point
+├── create_user.py            # CLI script for user management
+└── ...
 ```
 
 ---
