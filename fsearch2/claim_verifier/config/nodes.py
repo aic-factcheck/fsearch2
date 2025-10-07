@@ -15,6 +15,7 @@ EVIDENCE_RETRIEVAL_CONFIG = {
     # "hl": "cs",  # Google Serper hl parameter
     "gl": "en",  # Google Serper gl parameter
     "hl": "en",  # Google Serper hl parameter
+    "google_search_opts": "-site:demagog.cz -site:politifact.com -site:factcheck.org -site:snopes.com -factcheck.afp.com -filetype:pdf -filetype:docx"
 }
 
 EVIDENCE_EVALUATION_CONFIG = {

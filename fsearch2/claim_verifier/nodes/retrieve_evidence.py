@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Retrieval settings
 RESULTS_PER_QUERY = EVIDENCE_RETRIEVAL_CONFIG["results_per_query"]
 SEARCH_PROVIDER = EVIDENCE_RETRIEVAL_CONFIG["search_provider"]
+GOOGLE_SEARCH_OPTS = EVIDENCE_RETRIEVAL_CONFIG["google_search_opts"]
 
 
 async def fetch_full_text(url: str) -> str:
@@ -163,8 +164,7 @@ class SearchProviders:
 
 
 async def _search_query(query: str, gl: str = "cz", hl: str = "cs") -> List[Evidence]:
-    # query += " -site:demagog.cz -site:politifact.com -site:factcheck.org -site:snopes.com -factcheck.afp.com -filetype:pdf -filetype:docx"
-    query += " -site:demagog.cz -site:politifact.com -site:factcheck.org -site:snopes.com -factcheck.afp.com -filetype:docx"
+    query += " " + GOOGLE_SEARCH_OPTS
     logger.debug(f"_search_query: {query}")
     match SEARCH_PROVIDER.lower():
         case "tavily":

@@ -1,3 +1,4 @@
+git+https://github.com/aic-factcheck/aic-nlp-utils.git
 argon2_cffi
 bs4
 dotenv
