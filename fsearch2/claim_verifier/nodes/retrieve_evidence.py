@@ -5,6 +5,9 @@ Uses search queries to retrieve relevant evidence snippets from the web using ne
 
 import logging
 import asyncio
+import requests
+import os
+
 from typing import Any, Dict, List
 
 import httpx
@@ -102,6 +105,7 @@ class SearchProviders:
         logger.info(f"Searching with Serper: '{query}'")
         try:
             wrapper = GoogleSerperAPIWrapper(gl=gl, hl=hl)
+            
             raw = await wrapper.aresults(query)
             if not isinstance(raw, dict):
                 # Fallback: treat as plain text
@@ -175,6 +179,18 @@ async def _search_query(query: str, gl: str = "cz", hl: str = "cs") -> List[Evid
             return await SearchProviders.exa(query)
 
 
+def check_retrieval_api():
+    if SEARCH_PROVIDER.lower() == "serper":
+        r = requests.post(
+            "https://google.serper.dev/search",
+            headers={"X-API-KEY": os.getenv("SERPER_API_KEY"), "Content-Type": "application/json"},
+            json={"q": "test"}
+        )
+
+        if r.status_code != 200:
+            raise httpx.HTTPError(f"Serper API key not valid, got: {r.status_code}")
+        
+            
 async def retrieve_evidence_node(
     state: ClaimVerifierState,
     gl: str = "cz",

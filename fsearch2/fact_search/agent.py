@@ -5,6 +5,7 @@ from langgraph.graph.state import CompiledStateGraph
 from claim_verifier.nodes import (
     generate_search_query_node,
     retrieve_evidence_node,
+    check_retrieval_api,
     search_decision_node,
 )
 from fact_search.nodes import evaluate_evidence_node, mock_retrieve_evidence_node
@@ -18,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 def create_graph() -> CompiledStateGraph:
     """Set up the iterative claim verification workflow with caching per claim."""
+    check_retrieval_api()
+    
     workflow = StateGraph(ClaimVerifierState)
     
     # DEBUGGING VERDICT GENERATION
