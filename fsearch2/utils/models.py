@@ -10,7 +10,7 @@ from utils.settings import settings
 
 
 def get_llm(
-    model_name: str = "openai:gpt-5-mini",
+    model_name: str = "openai:gpt-6.1-sol",
     temperature: float = 0.0,
     completions: int = 1,
 ) -> BaseChatModel:

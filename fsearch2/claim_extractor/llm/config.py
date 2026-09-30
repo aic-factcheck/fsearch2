@@ -4,7 +4,7 @@ Central settings for language model behavior.
 """
 
 # Model selection
-MODEL_NAME = "openai:gpt-5-mini"
+MODEL_NAME = "openai:gpt-6.1-sol"
 
 # Temperature settings
 DEFAULT_TEMPERATURE = 0.0  # Use for exact, consistent outputs

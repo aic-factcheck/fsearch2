@@ -11,7 +11,8 @@ EVIDENCE_EVALUATION_CONFIG = {
     # "generate_verdict_instructions": "generate_verdict_instructions_v1.txt",
     "generate_verdict_instructions": "generate_verdict_instructions_v2.txt",
     # "model_name": "openai:gpt-5-nano",
-    "model_name": "openai:gpt-5-mini",
+    # "model_name": "openai:gpt-5-mini",
+    "model_name": "openai:gpt-6.1-sol",
     "max_length": 50000
 }
 
