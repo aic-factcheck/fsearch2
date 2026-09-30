@@ -9,7 +9,8 @@ EVIDENCE_EVALUATION_CONFIG = {
     "template_dir": "data/templates",
     "template_predict": "dseek/dseek_predict_01_process_json_schema_v1.txt.jinja",
     # "generate_verdict_instructions": "generate_verdict_instructions_v1.txt",
-    "generate_verdict_instructions": "generate_verdict_instructions_v2.txt",
+    # "generate_verdict_instructions": "generate_verdict_instructions_v2.txt",
+    "generate_verdict_instructions": "generate_verdict_instructions_v3.txt",  # v2 + evidence-only grounding
     # "model_name": "openai:gpt-5-nano",
     # "model_name": "openai:gpt-5-mini",
     "model_name": "openai:gpt-6.1-sol",

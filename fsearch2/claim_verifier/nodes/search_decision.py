@@ -26,12 +26,11 @@ class SearchDecisionOutput(BaseModel):
 
     Evaluates whether the current evidence is sufficient to make a confident
     fact-checking determination or if additional evidence gathering is needed.
-    Should be conservative - only recommend stopping when evidence is comprehensive
-    and conclusive.
+    Recommend stopping once every essential part of the claim is covered.
     """
 
     needs_more_evidence: bool = Field(
-        description="Whether additional evidence is needed before making a final determination. Return True if: evidence is limited (1-2 pieces), evidence is contradictory or unclear, evidence lacks authoritative sources, or claim requires more specific verification. Return False only when evidence is comprehensive, clear, and from reliable sources."
+        description="Whether additional evidence is needed before making a final determination. Return True if: an essential part of the claim is not covered, evidence is contradictory or unclear, or evidence lacks reliable sources. Return False when every essential part is directly addressed by reliable sources, including the specific dates, numbers or names it depends on."
     )
     missing_aspects: list[str] = Field(
         default_factory=list,
@@ -63,7 +62,7 @@ async def search_decision_node(
     evidence_summary = "\n".join(
         [
             f"- {ev.title}: {ev.text[:200]}..." if ev.title else f"- {ev.text[:200]}..."
-            for ev in evidence[:10]
+            for ev in evidence  # all rounds, at most 20 items (max_iterations+1 rounds x results_per_query)
         ]
     )
 

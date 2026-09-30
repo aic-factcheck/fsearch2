@@ -21,7 +21,8 @@ Your task: Create a single, effective search query to find evidence that could v
 
 Requirements:
 - Include key entities, names, dates, and specific details from the claim
-- Use search-engine-friendly language (no special characters)
+- Use only information stated in the claim: do not add dates, numbers or names you expect the answer to contain
+- Plain keywords only: no search operators (AND/OR, quotes, site:) and no special characters
 - Target authoritative sources (news, government, academic, fact-checking sites)
 - Keep it concise (5-15 words optimal)
 - Design to find both supporting AND contradictory evidence
@@ -44,7 +45,9 @@ Previous context: {context}
 Your task: Generate a NEW search query that explores different angles not covered by previous searches.
 
 Requirements:
-- Address the missing aspects mentioned in the context
+- Address the missing aspects mentioned in the context; if the claim combines several facts, target one missing aspect per query
+- Use only information stated in the claim: do not add dates, numbers or names you expect the answer to contain
+- Plain keywords only: no search operators (AND/OR, quotes, site:), 5-15 words
 - Use alternative terms and sources from previous queries  
 - Target specific gaps in evidence coverage
 - Avoid repeating similar search terms
@@ -106,20 +109,20 @@ Current time: {current_time}
 Your task: Determine if the current evidence is sufficient for a confident fact-checking verdict, or if more evidence is needed.
 
 Evidence is SUFFICIENT when:
-- Multiple authoritative sources (3+) with consistent information
+- Each essential part of the claim is directly addressed by at least one reliable source; a part counts as covered only if the specific date, number or name it needs appears in the evidence, not just its topic
 - Evidence directly addresses the claim with specific details
 - Sources are reliable and credible
 - No significant contradictory evidence from credible sources
 - Evidence is current/recent enough for time-sensitive claims
 
 Evidence is INSUFFICIENT when:
-- Limited evidence (1-2 sources) regardless of quality
+- Some essential part of the claim is not yet covered by any source
 - Evidence is vague, indirect, or incomplete
 - Sources lack credibility
 - Contradictory information without clear resolution
 - Evidence is outdated when recency matters for the claim
 
-Decision rule: Be conservative - when in doubt, gather more evidence.
+Decision rule: Gather more evidence when an essential part is uncovered or unresolved, but do not request more only to raise the source count.
 
 When recommending more evidence, be specific about what's missing:
 - "Official statements from [organization]"
