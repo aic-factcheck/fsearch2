@@ -18,6 +18,7 @@ from langchain_community.utilities import GoogleSerperAPIWrapper
 from claim_verifier.config import EVIDENCE_RETRIEVAL_CONFIG
 from claim_verifier.schemas import ClaimVerifierState, Evidence
 from fsearch2.utils.markdown import html_to_markdown
+from utils.errors import CreditsExhaustedError
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,13 @@ logger = logging.getLogger(__name__)
 RESULTS_PER_QUERY = EVIDENCE_RETRIEVAL_CONFIG["results_per_query"]
 SEARCH_PROVIDER = EVIDENCE_RETRIEVAL_CONFIG["search_provider"]
 GOOGLE_SEARCH_OPTS = EVIDENCE_RETRIEVAL_CONFIG["google_search_opts"]
+
+
+def _serper_credits_error(body: Any) -> CreditsExhaustedError | None:
+    """Serper reports errors as a JSON body like {"message": "Not enough credits", "statusCode": 400}."""
+    if isinstance(body, dict) and "statusCode" in body and "credit" in str(body.get("message", "")).lower():
+        return CreditsExhaustedError("serper", str(body.get("message")))
+    return None
 
 
 async def fetch_full_text(url: str) -> str:
@@ -107,6 +115,8 @@ class SearchProviders:
             wrapper = GoogleSerperAPIWrapper(gl=gl, hl=hl)
             
             raw = await wrapper.aresults(query)
+            if credits_error := _serper_credits_error(raw):
+                raise credits_error
             if not isinstance(raw, dict):
                 # Fallback: treat as plain text
                 return [Evidence(url="", text=str(raw), title="Serper Search Result")]
@@ -143,6 +153,9 @@ class SearchProviders:
 
             logger.info(f"Retrieved {len(evidence)} evidence items")
             return evidence
+        except CreditsExhaustedError:
+            logger.error(f"Serper credits exhausted for '{query}'")
+            raise
         except Exception as e:
             logger.error(f"Serper search failed for '{query}': {e}")
             return []
@@ -188,6 +201,12 @@ def check_retrieval_api():
         )
 
         if r.status_code != 200:
+            try:
+                body = r.json()
+            except ValueError:
+                body = None
+            if credits_error := _serper_credits_error(body):
+                raise credits_error
             raise httpx.HTTPError(f"Serper API key not valid, got: {r.status_code}")
         
             

@@ -25,6 +25,7 @@ from passlib.context import CryptContext
 from claim_verifier.schemas import ClaimVerifierState, LoginRequest, ValidatedClaim
 from fact_search.agent import create_graph
 from aic_nlp_utils.json import write_json
+from utils.errors import CreditsExhaustedError
 
 from fsearch2.fact_search.config.nodes import TEXT_REDUCER_CONFIG
 from fsearch2.utils.text_reducer import TextReducer
@@ -177,6 +178,22 @@ async def me(request: Request):
 
 
 # ---------- WebSocket ----------
+def error_message(claim_id: str, seq: int, e: Exception) -> Dict[str, Any]:
+    msg = {
+        "type": "error",
+        "claim_id": claim_id,
+        "seq": seq,
+        "error": str(e),
+        "message": str(e),
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    if isinstance(e, CreditsExhaustedError):
+        # lets the client show a dedicated "no credits" message
+        msg["error_code"] = "credits_exhausted"
+        msg["provider"] = e.provider
+    return msg
+
+
 @app.websocket("/ws/claims/{claim_id}")
 async def ws_claim(websocket: WebSocket, claim_id: str, last_seq: int = Query(default=0)):
     await websocket.accept()
@@ -245,7 +262,13 @@ async def ws_claim(websocket: WebSocket, claim_id: str, last_seq: int = Query(de
             return
 
         state = ClaimVerifierState(claim=ValidatedClaim(claim_text=claim_text))
-        graph = create_graph()
+        try:
+            graph = create_graph()
+        except CreditsExhaustedError as e:
+            logger.error("Cannot start claim %s: %s", claim_id, e)
+            await websocket.send_json(error_message(claim_id, 0, e))
+            await websocket.close(code=4004)
+            return
 
         claim_sessions[claim_id] = {
             "graph": graph,
@@ -342,14 +365,7 @@ async def run_graph_and_stream(claim_id: str, websocket: WebSocket):
     except Exception as e:
         logger.exception("Error while running graph for claim %s", claim_id)
         session["seq"] += 1
-        err_msg = {
-            "type": "error",
-            "claim_id": claim_id,
-            "seq": session["seq"],
-            "error": str(e),
-            "message": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
-        }
+        err_msg = error_message(claim_id, session["seq"], e)
         session["updates"].append(err_msg)
         try:
             await websocket.send_json(err_msg)

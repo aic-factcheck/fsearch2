@@ -7,8 +7,11 @@ import asyncio
 import logging
 from typing import Any, Callable, List, Optional, Tuple, Type, TypeVar
 
+import openai
 from pydantic import BaseModel
 from langchain_core.language_models.chat_models import BaseChatModel
+
+from utils.errors import CreditsExhaustedError
 
 T = TypeVar("T")
 R = TypeVar("R")
@@ -79,9 +82,18 @@ async def call_llm_with_structured_output(
 
     Returns:
         Structured output or None if error
+
+    Raises:
+        CreditsExhaustedError: the OpenAI account has no credits left
     """
     try:
         return await llm.with_structured_output(output_class).ainvoke(messages)
+    except openai.RateLimitError as e:
+        if getattr(e, "code", None) == "insufficient_quota":
+            logger.error(f"OpenAI credits exhausted in LLM call for {context_desc}: {e}")
+            raise CreditsExhaustedError("openai", str(e)) from e
+        logger.error(f"Error in LLM call for {context_desc}: {e}")
+        return None
     except Exception as e:
         logger.error(f"Error in LLM call for {context_desc}: {e}")
         return None

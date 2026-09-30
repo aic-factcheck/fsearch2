@@ -3,6 +3,7 @@
 Common tools shared across all components.
 """
 
+from utils.errors import CreditsExhaustedError  # absolute on purpose, see utils/errors.py
 from .llm import (
     call_llm_with_structured_output,
     process_with_voting,
@@ -19,6 +20,8 @@ __all__ = [
     "create_checkpointer",
     "setup_checkpointer",
     "create_checkpointer_sync",
+    # Errors
+    "CreditsExhaustedError",
     # LLM utilities
     "call_llm_with_structured_output",
     "process_with_voting",
