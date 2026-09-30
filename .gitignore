@@ -181,3 +181,6 @@ dist/
 build/
 .vscode
 ml_avail.txt
+
+# user accounts with password hashes (create_user.py)
+users.json
