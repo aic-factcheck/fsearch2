@@ -18,7 +18,8 @@ from fastapi import (
     HTTPException,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from passlib.context import CryptContext
 
@@ -56,8 +57,8 @@ pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 # Cookie/session configuration
 COOKIE_NAME = "fs2_session"
 SESSION_TTL_HOURS = 8
-COOKIE_SAMESITE = "lax"  # 'none' for cross-site prod
-COOKIE_SECURE = False     # True for HTTPS prod
+COOKIE_SAMESITE = os.getenv("FS2_COOKIE_SAMESITE", "lax")  # 'none' for cross-site prod
+COOKIE_SECURE = os.getenv("FS2_COOKIE_SECURE", "false").lower() == "true"  # true for HTTPS prod
 
 # In-memory auth sessions (token -> {username, expires})
 AUTH_SESSIONS: Dict[str, Dict[str, Any]] = {}
@@ -66,6 +67,14 @@ claim_sessions: Dict[str, Dict[str, Any]] = {}
 
 # ---------- helpers ----------
 def load_users() -> Dict[str, Any]:
+    # FS2_USERS (same JSON as users.json) keeps the hashes out of the repo, e.g. as a hosting secret
+    users_json = os.getenv("FS2_USERS")
+    if users_json:
+        try:
+            return json.loads(users_json)
+        except Exception:
+            logger.exception("Failed to parse FS2_USERS")
+            return {}
     if not USERS_FILE.exists():
         return {}
     try:
@@ -372,3 +381,15 @@ async def run_graph_and_stream(claim_id: str, websocket: WebSocket):
         except Exception:
             logger.debug("Failed to send error msg to client %s (socket may be closed)", claim_id)
         session["done"] = True
+
+
+# ---------- static frontend (optional) ----------
+# Serves the built frontend from the same origin, so the session cookie is first-party.
+# Mounted last so it cannot shadow the /api and /ws routes.
+FRONTEND_DIST = os.getenv("FS2_FRONTEND_DIST")
+if FRONTEND_DIST:
+    @app.get("/", include_in_schema=False)
+    async def root_redirect():
+        return RedirectResponse("/fsearch2/")
+
+    app.mount("/fsearch2", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
