@@ -57,6 +57,20 @@ def renumber_assessment_references(assessment: str, evidence: List[Evidence]) ->
     Returns:
         Tuple of (renumbered_assessment, reordered_sources)
     """
+    # Expand grouped references like [1, 3, 4] or [2-4] into [1][3][4] and [2][3][4],
+    # so that every reference is renumbered (the frontend also only links single [n])
+    def expand_group(match):
+        refs = []
+        for part in re.split(r'\s*,\s*', match.group(1)):
+            bounds = re.split(r'\s*[-–]\s*', part)
+            if len(bounds) == 2 and int(bounds[0]) <= int(bounds[1]):
+                refs.extend(range(int(bounds[0]), int(bounds[1]) + 1))
+            else:
+                refs.extend(int(b) for b in bounds)
+        return ''.join(f'[{ref}]' for ref in refs)
+
+    assessment = re.sub(r'\[(\d+(?:\s*[,\-–]\s*\d+)+)\]', expand_group, assessment)
+
     # Find all references in order of appearance
     references = re.findall(r'\[(\d+)\]', assessment)
     
@@ -64,23 +78,30 @@ def renumber_assessment_references(assessment: str, evidence: List[Evidence]) ->
         return assessment, evidence
     
     # Create mapping from old reference numbers to new ones
-    # Using dict to preserve order of first appearance
+    # Using dict to preserve order of first appearance.
+    # References to non-existent evidence get no number, so they don't shift the others.
     old_to_new: Dict[int, int] = {}
     new_number = 1
     
     for ref in references:
         old_ref = int(ref)
+        if not 1 <= old_ref <= len(evidence):
+            continue
         if old_ref not in old_to_new:
             old_to_new[old_ref] = new_number
             new_number += 1
     
-    # Replace references in assessment
+    # Replace references in assessment, dropping references to non-existent evidence
     # We need to replace all occurrences, so we'll use a single pass with a function
     def replace_ref(match):
-        old_ref = int(match.group(1))
-        return f'[{old_to_new.get(old_ref, old_ref)}]'
+        old_ref = int(match.group(2))
+        if old_ref not in old_to_new:
+            logger.warning(f"Dropping reference [{old_ref}] to non-existent evidence (have {len(evidence)})")
+            # keep the leading space if another reference follows directly
+            return match.group(1) if match.string.startswith('[', match.end()) else ''
+        return f'{match.group(1)}[{old_to_new[old_ref]}]'
     
-    new_assessment = re.sub(r'\[(\d+)\]', replace_ref, assessment)
+    new_assessment = re.sub(r'(\s*)\[(\d+)\]', replace_ref, assessment)
     
     # Reorder sources: referenced sources first (in new order), then unreferenced
     referenced_sources = []
@@ -91,7 +112,7 @@ def renumber_assessment_references(assessment: str, evidence: List[Evidence]) ->
     
     # First, add referenced sources in their new order
     for old_idx in sorted(old_indices_used.keys(), key=lambda x: old_indices_used[x]):
-        if old_idx < len(evidence):
+        if 0 <= old_idx < len(evidence):
             source = evidence[old_idx]
             # Mark as influential since it's referenced
             referenced_sources.append(
